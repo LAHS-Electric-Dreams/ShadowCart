@@ -30,12 +30,13 @@ class Lidar(object):
 		# Returns a single LiDAR scan as a dictionary of angles and distances.
 		# {angle: distance}
 
-		# Get the list of raw scans
-		scans = self.rplidar.iter_scans()
-
 		# This MUST BE THE SECOND SCAN TAKEN because the first scan taken tends to exclude a large portion of the unit circle.
 		# Access 2nd scan (or the last one if there are less than 2 so far)
-		raw_scan = scans[ 2 if len(scans) > 2 else -1 ]
+		
+		#  This for loop is an ugly solution to iterating over the received scans, but it seems to work for now. 
+		for i, raw_scan in enumerate(self.rplidar.iter_scans()):
+            		if i > 1:
+                		break
 
 		# Convert the raw array of tuples: (quality, angle, distance)
 		# to a nicely formatted dictionary: {angle: distance}
