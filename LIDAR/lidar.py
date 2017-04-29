@@ -4,7 +4,6 @@
 
 # Import the original RPLidar class. 
 from rplidar import RPLidar, RPLidarException
-import numpy as np
 from time import sleep, time
 
 class Lidar(object):
@@ -47,35 +46,42 @@ class Lidar(object):
 		return scan
 
 	def get_bucket_scan(self):
-		# This function better be VVVVVEEEEERRRRRYYYYY efficient or else the car won't work ;(
+		# Considering only angles within "front_angle" of "zero_angle",
+		# finds the average of the N closest distance readings on either side.
+		# N is defined by "num_mins_to_average"
+		# Returns an array: [left_mean, right_mean]
 
-		# Here, we need to return the average of the minimum nun_mins_to_average scan valuesto the left and to the right of 0 degrees with a range of front_angle. This will be returned as an array.
+		# This function better be VVVVVEEEEERRRRRYYYYY efficient or else the car won't work ;) – Ravi
+		# We should name these variables better. – Darryl
 
+		# Get the latest scan.
 		scan = self.get_raw_single_scan()
 		print(scan)
 
-		bucket_left_data = []
-		bucket_right_data = []
+		# Define lists of distances - one for angles to the left, and one for angles to the right
+		left_distances = []
+		right_distances = []
 
-		for measurement in scan:
-			if (measurement[1] < self.zero_angle and measurement[1] > (self.zero_angle - self.front_angle)):
-				bucket_left_data.append(measurement[2])
+		# For every scanned angle within "front_angle" of "zero_angle",
+		# record the distance at that angle into the appropriate list.
+		for angle, distance in scan.items():
+			calibrated_angle = angle - self.zero_angle
+			if -self.front_angle < calibrated_angle < 0:
+				left_distances.append(distance)
+			else if 0 < calibrated_angle < self.front_angle:
+				right_distances.append(distance)
+		
+		# Sort the distances by magnitude.
+		left_distances.sort()
+		right_distances.sort()
 
-		for measurement in scan:
-			if (measurement[1] > self.zero_angle and measurement[1] < (self.zero_angle + self.front_angle)):
-				bucket_right_data.append(measurement[2])
+		# Find the mean of the closest N distances, where N is "num_mins_to_average"
+		n = self.num_mins_to_average
+		left_mean = sum( left_distances[0:n] ) / n
+		right_mean = sum( right_distances[0:n] ) / n
 
-		left_sorted = list(np.sort(bucket_left_data))
-		right_sorted = list(np.sort(bucket_right_data))
-
-		# Now, we just need to take the first num_mins_to_average elements of the above two arrays.
-		minimum_left_elements = left_sorted[0:self.num_mins_to_average]
-		minimum_right_elements = right_sorted[0:self.num_mins_to_average]
-
-		left_minimum_mean = float(np.mean(minimum_left_elements))
-		right_minimum_mean = float(np.mean(minimum_right_elements))
-
-		return [left_minimum_mean, right_minimum_mean]
+		# Return the left and right means as an array.
+		return [left_mean, right_mean]
 
 	def get_bucket_scan_with_catching(self):
 		# We have to declare scan here since otherwise it will be a local variable, making it useless. 
