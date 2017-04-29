@@ -28,14 +28,22 @@ class Lidar(object):
 		# LOL XD: This function is only one line :)
 
 	def get_raw_single_scan(self):
-		# This function has to return the raw scan data as a dicationary. This MUST BE THE SECOND SCAN TAKEN because the first scan taken tends to exclude a large portion of the unit circle. 
-		for i, scan in enumerate(self.rplidar.iter_scans()):
-			if i > 1:
-				break
+		# Returns a single LiDAR scan as a dictionary of angles and distances.
+		# {angle: distance}
 
-		# Now we have the correct scan. :)
+		# Get the list of raw scans
+		scans = self.rplidar.iter_scans()
 
-		# Iterate over the array of tuples to extract each angle and distance measurement.
+		# This MUST BE THE SECOND SCAN TAKEN because the first scan taken tends to exclude a large portion of the unit circle.
+		# Access 2nd scan (or the last one if there are less than 2 so far)
+		raw_scan = scans[ 2 if len(scans) > 2 else -1 ]
+
+		# Convert the raw array of tuples: (quality, angle, distance)
+		# to a nicely formatted dictionary: {angle: distance}
+		scan = {}
+		for quality, angle, distance in raw_scan:
+			scan[angle] = distance
+
 		return scan
 
 	def get_bucket_scan(self):
