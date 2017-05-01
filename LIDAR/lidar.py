@@ -108,9 +108,10 @@ class Lidar(object):
     # This will return a tuple containing information about the detection
     # of objects to the left, right, front, or back. It is meant to be a very
     # simple situational awareness algorithm that can be tested easily.
-    # ** Example: No objects within the radius -> (false, false)
-    # ** Example: Object to the left -> (true, false)
-    # ** Example: Object to the right -> (false, true)
+    # ** Return Format: (front, back, left, right)
+    # ** Example: No objects within the radius -> (false, false, false, false)
+    # ** Example: Object to the left -> (false, false, true, false)
+    # ** Example: Object to the right -> (false, false, false, true)
     def simple_obstacle_detect(self, range_radius):
 
         # Declare variables for direction detection
