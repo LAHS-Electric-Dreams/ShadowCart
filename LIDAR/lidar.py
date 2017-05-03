@@ -161,10 +161,10 @@ class Lidar(object):
     # the LiDAR system. It will return an array of tuples containing possible
     # physical objects/obstacles that the LiDAR has found.
     # ** Parameter: range_radius = Radius to detect objects in
-    # ** Parameter: similar_by = How similar the object's distances must be at each scan to be detected
+    # ** Parameter: squelch = How similar the object's distances must be at each scan to be detected
     # ** Return Format: (Start Angle (int), End Angle (int), Average Distance (int))
     # ** Example: Object ranging from 90º to 100º with mean dist. of 5 -> (90, 100, 5)
-    def object_detect(self, range_radius, similar_by):
+    def object_detect(self, range_radius, squelch):
         scan = self.get_raw_single_scan()
 
         found_objects = []  # Format: (Start Angle, End Angle, Average Distance)
@@ -177,7 +177,7 @@ class Lidar(object):
         for angle, dist in enumerate(scan):
 
             # If the LiDAR has found a distance less than the radius, and the scan before/after is similar in range
-            if dist < range_radius and (scan[angle - 1] > angle - similar_by or scan[angle + 1] < angle + similar_by):
+            if dist < range_radius and (scan[angle - 1] > angle - squelch or scan[angle + 1] < angle + squelch):
                 if not in_object:   # If we are not already in an object, we start one
                     start_angle = scan[angle - 1]
                 else:
