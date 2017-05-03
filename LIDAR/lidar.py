@@ -1,7 +1,7 @@
 # This file contains the class structure for OUR lidar class. Obviously, it will import the RPLIDAR class as well. 
 
 # The final output of this class is a dictionary with bucket names and average k-minimum
-# distances. These are all parameters that can be set at the initializationof the Lidar class.
+# distances. These are all parameters that can be set at the initialization of the Lidar class.
 
 # Import the original RPLidar class. 
 from rplidar import RPLidar, RPLidarException
@@ -151,11 +151,39 @@ class Lidar(object):
                 print("We're less than 300º!")
 
             # Front Section (Part 2)
-            else:   # The other half of the "front" section
+            else:  # The other half of the "front" section
                 if dist <= range_radius:
                     front = True
 
         return {front, back, left, right}
+
+    def object_detect(self, range_radius, similar_by):
+        scan = self.get_raw_single_scan()
+
+        found_objects = []  # Format: (Start Angle, End Angle, Average Distance)
+
+        in_object = False
+        start_angle = -1
+        distances = []
+        for angle, dist in enumerate(scan):
+            if dist < range_radius and (scan[angle - 1] > angle - similar_by or scan[angle + 1] < angle + similar_by):
+                if not in_object:
+                    start_angle = scan[angle - 1]
+                else:
+                    distances.append(dist)
+            elif in_object:  # Found the end of the object
+                in_object = False
+                found_objects.append((start_angle, scan[angle - 1], calc_mean(distances)))
+
+        return found_objects
+
+
+# Calculate the average number for a list
+def calc_mean(nums):
+    total = 0
+    for i in nums:
+        total += i
+    return total / nums.count
 
 
 lidar1 = Lidar(20, 5, '/dev/ttyUSB0', 250, 100)
@@ -164,7 +192,7 @@ lidar1.start_up_rplidar()
 start = time()
 for i in range(0, 1000):
     print(lidar1.get_bucket_scan_with_catching())
-#lidar1.rplidar.reset()
+# lidar1.rplidar.reset()
 
 # Test the simple obstacle detection
 testAware = lidar1.simple_obstacle_detect(5)
