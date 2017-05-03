@@ -157,23 +157,40 @@ class Lidar(object):
 
         return {front, back, left, right}
 
+    # Method to detect and store the location of nearby physical objects using
+    # the LiDAR system. It will return an array of tuples containing possible
+    # physical objects/obstacles that the LiDAR has found.
+    # ** Parameter: range_radius = Radius to detect objects in
+    # ** Parameter: similar_by = How similar the object's distances must be at each scan to be detected
+    # ** Return Format: (Start Angle (int), End Angle (int), Average Distance (int))
+    # ** Example: Object ranging from 90º to 100º with mean dist. of 5 -> (90, 100, 5)
     def object_detect(self, range_radius, similar_by):
         scan = self.get_raw_single_scan()
 
         found_objects = []  # Format: (Start Angle, End Angle, Average Distance)
 
-        in_object = False
-        start_angle = -1
-        distances = []
+        in_object = False   # Variable to detect if currently in an object
+        start_angle = -1    # Variable to store start angle of a detected object
+        distances = []      # Array to store distances to the object
+
+        # Run through the scan
         for angle, dist in enumerate(scan):
+
+            # If the LiDAR has found a distance less than the radius, and the scan before/after is similar in range
             if dist < range_radius and (scan[angle - 1] > angle - similar_by or scan[angle + 1] < angle + similar_by):
-                if not in_object:
+                if not in_object:   # If we are not already in an object, we start one
                     start_angle = scan[angle - 1]
                 else:
                     distances.append(dist)
             elif in_object:  # Found the end of the object
-                in_object = False
+
+                # Add the found object to the array
                 found_objects.append((start_angle, scan[angle - 1], calc_mean(distances)))
+
+                # Clean Up
+                in_object = False
+                start_angle = -1
+                distances = []
 
         return found_objects
 
